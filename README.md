@@ -1,2 +1,2 @@
 # imagined-qd
-Model-based QD algorithms written in JAX
+Model-based Quality-Diversity (QD) algorithms written in JAX
