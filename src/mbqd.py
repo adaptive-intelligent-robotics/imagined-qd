@@ -194,7 +194,7 @@ class ModelBasedMAPElites:
 
         return repertoire, emitter_state, metrics, random_key
 
-    def _update_body_fun(self, state):
+    def _update_body_fun(self, state: Tuple) -> Tuple:
         """
         Body function of the update loop.
         """
@@ -226,7 +226,7 @@ class ModelBasedMAPElites:
         )
 
 
-    def _update_cond_fun(self, state):
+    def _update_cond_fun(self, state: Tuple) -> Tuple:
         """
         Condition function of the update loop.
         Termination condition of the imagination loop

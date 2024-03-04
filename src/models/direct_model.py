@@ -179,9 +179,6 @@ class DirectModel(SurrogateModel):
             desc=descriptors,
         )
 
-        # print("Fitnesses shape: ", fitnesses.shape)
-        # print("Descriptors shape: ", descriptors.shape)
-
         return (
             fitnesses,
             descriptors,
@@ -245,18 +242,12 @@ class DirectModel(SurrogateModel):
                 model_params,
                 samples,
             )
-            # print("Loss shape: ", loss.shape)
-            # print("Gradient shape: ", jax.tree_util.tree_map(lambda x: x.shape, gradient))
-            
+
             (model_updates, optimizer_state,) = self._optimizer.update(
                 gradient, optimizer_state
             )
-            # print("Model updates shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_updates))
-            # print("Optimizer state shape: ", jax.tree_util.tree_map(lambda x: x.shape, optimizer_state))
 
             model_params = optax.apply_updates(model_params, model_updates)
-            # print("Model params shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_params))
-            # print(f"Training Loss {it}/{num_batches}: ", loss)
 
         training_steps = training_steps + num_batches
 
@@ -264,7 +255,6 @@ class DirectModel(SurrogateModel):
         test_samples, random_key = data_buffer.sample_data(
             random_key, test_data, sample_size=self._config.surrogate_batch_size
         )
-        # print("Test samples obs shape: ", jax.tree_util.tree_map(lambda x: x.shape, test_samples))
 
         test_loss, _ = jax.lax.stop_gradient(
             jax.value_and_grad(_loss_fn)(
@@ -285,9 +275,6 @@ class DirectModel(SurrogateModel):
             return best_test_loss, epochs_since_improvement
         
         # less than 1% improvement in test loss - early stopping
-        # print("best_test_loss: ", best_test_loss)
-        # print("test_loss: ", test_loss)
-        # print("Condition", (best_test_loss - test_loss) / best_test_loss)
         best_test_loss, epochs_since_improvement = jax.lax.cond(
             (best_test_loss - test_loss)/abs(best_test_loss) > 0.01,
             cond_true,
@@ -326,8 +313,6 @@ class DirectModel(SurrogateModel):
             training_steps,
         ) = state
         
-        # print("Epochs since improvement: ", epochs_since_improvement)
-        # print("Training steps: ", training_steps)
         return jnp.logical_and(
             epochs_since_improvement < self._config.max_epochs_since_improvement,
             training_steps < self._config.num_model_training_steps

@@ -2,10 +2,10 @@
 Model-based Quality-Diversity (QD) algorithms written in JAX. This library builds on the [`QDax`](https://github.com/adaptive-intelligent-robotics/QDax) library.
 
 
-Model-based QD algorithms can leverage the synergy between learnt models (more recently, large foundation models) and QD algorithms to self-improve 🔄🚴. It exploits the the predictive and generative capabilities of learnt models to improve search and the effective data generation capabilites of Quality-Diversity to improve the model. More conventionally, model-based QD algorithms use models to predict the quality and diversity of generated solutions. In an optimization task, QD search can be performed fully in imagination using just feedback from the model to minimize ground-truth task evaluations.
+Model-based QD algorithms can leverage the synergy between learnt models (more recently, large foundation models) and QD algorithms to self-improve 🔄🚴. It exploits the predictive and generative capabilities of learnt models to improve search and the effective data generation capabilities of Quality-Diversity to improve the model. More conventionally, model-based QD algorithms use models to predict the quality and diversity of generated solutions. In an optimization task, QD search can be performed fully in imagination using just feedback from the model to minimize ground-truth task evaluations.
 
 ## Installation 🛠️
-Only works for `python>=3.10` (because of the `brax` dependency)
+Requires `python>=3.10` (because of the `brax` dependency)
 ```bash
 pip install qdax
 

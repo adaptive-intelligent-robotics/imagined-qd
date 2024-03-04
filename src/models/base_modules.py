@@ -135,7 +135,7 @@ def make_dynamics_model_loss_fn(
         the loss of the dynamics model
     """
 
-    #@jax.jit
+    @jax.jit
     def _dynamics_model_loss_fn(
         model_params: Params,
         transitions: Transition,
@@ -198,7 +198,7 @@ def make_prob_dynamics_model_loss_fn(
         the loss of the dynamics model
     """
     if learn_std:
-        #@jax.jit
+        @jax.jit
         def _dynamics_model_loss_fn(
             model_params: Params,
             transitions: Transition,
@@ -222,7 +222,7 @@ def make_prob_dynamics_model_loss_fn(
 
             return loss
     else: 
-        #@jax.jit
+        @jax.jit
         def _dynamics_model_loss_fn(
             model_params: Params,
             transitions: Transition,
@@ -285,15 +285,13 @@ class DirectModule(nn.Module):
         '''
         get normalization params of input data
         '''
-        # print("States shape: ", states.shape)
-        # print("Actions shape: ", actions.shape)
+
         data = genotypes
         mean = jnp.mean(data, axis=0, keepdims=True).squeeze(axis=0)
         std = jnp.std(data, axis=0, keepdims=True).squeeze(axis=0)
         std = std.at[std != std].set(1.0)
         std = std.at[std < 1e-12].set(1.0)
-        # print("Mean shape: ", mean.shape)
-        # print("Std shape: ", std.shape)
+
         self.input_mu = mean
         self.input_std = std
 
@@ -353,8 +351,7 @@ def make_direct_model_loss_fn(
         """
         # get predictions
         pred_fit_bd_norm = dynamics_model_fn(model_params, data.genotype)
-        # print("Train model pred_delta next state norm: ", pred_delta_next_state_norm.shape)
-        
+      
         # compute target
         target_fit_bd = jnp.concatenate([jnp.expand_dims(data.fitness, axis=-1), data.desc], axis=-1)
         # print("Train model target delta next state: ", target_delta_next_state.shape)
@@ -368,7 +365,7 @@ def make_direct_model_loss_fn(
 
 class ProbDirectModule(DirectModule):
     """
-    Probablistic Surrogate Model
+    Probablistic Direct Model
     """
 
     learn_std: bool = False
@@ -414,7 +411,6 @@ def make_prob_direct_model_loss_fn(
 
     Args:
         direct_model_fn: the apply function of the direct model - make sure we put the log prob one
-
     Returns:
         the loss of the direct model
     """
@@ -433,11 +429,9 @@ def make_prob_direct_model_loss_fn(
 
             target_fit_bd = jnp.concatenate([jnp.expand_dims(data.fitness, axis=-1), data.desc], axis=-1)
             target_fit_bd_norm = (target_fit_bd - output_mu)/(output_std + 1e-6)
-            # print("Train model target delta next state: ", target_delta_next_state.shape)
-
+           
             pred_fit_bd_norm = direct_model_fn(model_params, data.genotype)
-            # print("Train model pred_delta next state norm: ", pred_delta_next_state_norm.shape)
-
+         
             loss = -jnp.mean(jnp.sum(log_prob_dist(pred_fit_bd_norm, target_fit_bd_norm), axis=-1), axis=-1)
             
             # print("Loss shape: ",loss.shape)
@@ -457,11 +451,9 @@ def make_prob_direct_model_loss_fn(
 
             target_fit_bd = jnp.concatenate([data.fitness, data.desc], axis=-1)
             target_fit_bd_norm = (target_fit_bd - output_mu)/(output_std + 1e-6)
-            # print("Train model target delta next state: ", target_delta_next_state.shape)
-
+           
             pred_fit_bd_norm = direct_model_fn(model_params, data.genotype)
-            # print("Train model pred_delta next state norm: ", pred_delta_next_state_norm.shape)
-
+          
             loss = -jnp.mean(jnp.sum(log_prob_fixed_dist(pred_fit_bd_norm, fixed_std, target_fit_bd_norm), axis=-1), axis=-1)
             
             # print("Loss shape: ",loss.shape)

@@ -245,12 +245,8 @@ class DynamicsModel(SurrogateModel):
         fake_action = jnp.zeros(shape=(self._config.surrogate_ensemble_size, self._action_size,))
         init_params = jax.vmap(self.dynamics_model.init)(subkeys, fake_state, fake_action)
 
-        # print("init_params dynamics model:", jax.tree_util.tree_map(lambda x: x.shape, init_params))
-
         # init optimizer
         optimizer_state = self._optimizer.init(init_params)
-
-        # print("optimizer_state dynamics model:", jax.tree_util.tree_map(lambda x: x.shape, optimizer_state))
         
         # initialize replay buffer used to train dynamics model
         dummy_transition = QDTransition.init_dummy(
@@ -296,10 +292,8 @@ class DynamicsModel(SurrogateModel):
         # predict next state with probablistic ensemble model - same API as deterministic API (takes in key) but doenst do anything with it
         prob_keys = jax.random.split(prob_key, num=self._config.surrogate_ensemble_size)
         delta_next_state_e = jax.vmap(self.dynamics_model.get_pred)(model_params, state_e, actions_e, prob_keys)
-        # print("Delta next shape ensemble: ", delta_next_state_e.shape)
         
         delta_next_state = delta_next_state_e[model_idx]
-        # print("Delta next shape selected: ", delta_next_state.shape)
 
         next_state = state + delta_next_state
         rwd = self.reward_extractor_fn(next_state, state, actions)
@@ -398,8 +392,6 @@ class DynamicsModel(SurrogateModel):
 
         _final_state, data = jax.vmap(unroll_fn)(init_states, policy_params, model_idx)
 
-        # print("Shape of imagined rewards: ", data.rewards.shape) # (B, T)
-        # print("Shape of imagined obs trajectory: ",data.obs.shape) # (B, T, D)
         fitnesses = jnp.sum(data.rewards, axis=1)
         descriptors = self.bd_extractor_fn(data.obs, data.actions)
 
@@ -473,7 +465,6 @@ class DynamicsModel(SurrogateModel):
             )
 
             model_params = jax.vmap(optax.apply_updates)(model_params, model_updates)
-           
             # print(f"Training Loss {it}/{num_batches}: ", loss)
 
         training_steps = training_steps + num_batches
@@ -590,11 +581,8 @@ class DynamicsModel(SurrogateModel):
                 (model_updates, optimizer_state,) = self._optimizer.update(
                     gradient, optimizer_state
                 )
-                # print("Model updates shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_updates))
-                # print("Optimizer state shape: ", jax.tree_util.tree_map(lambda x: x.shape, optimizer_state))
-
+               
                 model_params = jax.vmap(optax.apply_updates)(model_params, model_updates)
-                # print("Model params shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_params))
                 # print(f"Training Loss {it}/{num_batches}: ", loss)
                 return (model_params, optimizer_state)
 
