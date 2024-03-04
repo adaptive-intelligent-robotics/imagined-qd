@@ -22,8 +22,8 @@ grid_shape: [50, 50]
 log_period: 50
 store_repertoire: True
 store_repertoire_log_period: 200
-plot_grid: False
-plot_grid_log_period: 200
+plot_grid: True
+plot_grid_log_period: 10
 
 # Surrogate Model Parameters
 num_imagined_iterations: 100

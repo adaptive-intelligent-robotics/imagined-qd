@@ -27,7 +27,7 @@ from qdax.tasks.brax_envs import reset_based_scoring_function_brax_envs as reset
 
 from src.mbqd import ModelBasedMAPElites
 from src.models.dynamics_model import DynamicsModel as DynamicsModelEnsemble
-from src.models.dynamics_model import SurrogateModelConfig
+from src.models.dynamics_model import DynamicsModelConfig
 from task_fitness_feature_utils import bd_extractor_imagination, fitness_extractor_imagination
 
 
@@ -35,7 +35,6 @@ from qdax.utils.plotting import plot_map_elites_results
 from qdax.utils.plotting import plot_2d_map_elites_repertoire
 
 import hydra
-
 
 
 @dataclass
@@ -194,7 +193,7 @@ def train(config: ExperimentConfig) -> None:
 
 
     # Define surrogate model config
-    surrogate_model_config = SurrogateModelConfig(
+    surrogate_model_config = DynamicsModelConfig(
         imagination_horizon=config.episode_length,
         surrogate_hidden_layer_sizes=config.surrogate_hidden_layer_sizes,
         surrogate_ensemble_size=config.surrogate_ensemble_size,

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from functools import partials
 from typing import Any, Callable, Optional, Tuple
 
 import jax.numpy as jnp
@@ -17,8 +16,7 @@ Surrogate model class/object in QD is anything that will be used to predict the 
 - mainly neural networks of different forms implemented in this library
 '''
 
-@dataclass
-class SurrogateModelState:
+class SurrogateModelState(PyTreeNode):
     """
     State of the surrogate model
     """

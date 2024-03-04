@@ -12,6 +12,7 @@ from flax.struct import PyTreeNode
 from qdax.core.neuroevolution.buffers.buffer import Transition, QDTransition
 from qdax.types import Descriptor, ExtraScores, Fitness, Genotype, Params, RNGKey
 
+from src.models.base_utils import SurrogateModel, SurrogateModelState, SurrogateModelConfig
 from src.models.base_models import (
     DynamicsModule, 
     make_dynamics_model_loss_fn,
@@ -22,7 +23,7 @@ from src.models.base_models import (
 from src.models.utils import ImprovedReplayBuffer as ReplayBuffer
 
 @dataclass
-class SurrogateModelConfig:
+class DynamicsModelConfig(SurrogateModelConfig):
 
     imagination_horizon: int = 200 # should correspond to episode length
     add_buffer_size: int = 200 # how many solutions to add to the buffer before ending imagination
@@ -52,7 +53,7 @@ class SurrogateModelConfig:
     max_epochs_since_improvement: int = 5
     
 
-class SurrogateModelState(PyTreeNode):
+class DynamicsModelState(SurrogateModelState):
 
     params: Params
     optimizer_state: optax.OptState
@@ -148,7 +149,7 @@ def generate_unroll_ts1(
 
 
 
-class DynamicsModel:
+class DynamicsModel(SurrogateModel):
     '''
     Wraps DynamicsModule to provide a high-level interface for 
     (i) recursively rolling out the model in imagination, given a params/policies (getting one evaluation to get expected fitness and desc)
@@ -233,7 +234,7 @@ class DynamicsModel:
             self.generate_unroll_fn = generate_unroll_ts1
 
 
-    def init(self, random_key: RNGKey) -> Tuple[SurrogateModelState, RNGKey]:
+    def init(self, random_key: RNGKey) -> Tuple[DynamicsModelState, RNGKey]:
         """
         Initializes the training state (model params and optimizer state) of the model
         """
@@ -263,7 +264,7 @@ class DynamicsModel:
 
         # initialize training state
         random_key, subkey = jax.random.split(random_key)
-        training_state = SurrogateModelState(params=init_params, 
+        training_state = DynamicsModelState(params=init_params, 
                                           optimizer_state=optimizer_state,
                                           replay_buffer=replay_buffer,
                                           random_key=subkey,
@@ -388,7 +389,7 @@ class DynamicsModel:
         # Perform rollouts with each policy
         random_key, subkey = jax.random.split(random_key)
         unroll_fn = partial(
-            generate_unroll,
+            self.generate_unroll_fn,
             model_params=model_params,
             random_key=subkey,
             episode_length=self._config.imagination_horizon,
@@ -413,9 +414,9 @@ class DynamicsModel:
 
     def update(
         self,
-        surrogate_state: SurrogateModelState, 
+        surrogate_state: DynamicsModelState, 
         extra_scores: ExtraScores,
-    ) -> SurrogateModelState:
+    ) -> DynamicsModelState:
         '''update the entire dynamics model state by adding transitions to the replay buffer'''
         transitions = extra_scores["transitions"]
 
@@ -630,8 +631,8 @@ class DynamicsModel:
 
     def train_model(
         self,
-        surrogate_state: SurrogateModelState
-    ) -> SurrogateModelState:
+        surrogate_state: DynamicsModelState
+    ) -> DynamicsModelState:
         """
         Trains the deep dynamics model
         - 2 strategies (1) simple training for fixed number of epochs (2) training with early stopping (based on test loss)
@@ -660,7 +661,7 @@ class DynamicsModel:
         # (new_surrogate_state, random_key) = self._train_model_simple(surrogate_state, random_key)
 
         # Create new training state
-        new_training_state = SurrogateModelState(
+        new_training_state = DynamicsModelState(
             params=new_surrogate_state.params,
             optimizer_state=new_surrogate_state.optimizer_state,
             replay_buffer=replay_buffer,
