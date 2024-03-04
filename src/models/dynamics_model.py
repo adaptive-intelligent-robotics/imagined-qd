@@ -12,8 +12,8 @@ from flax.struct import PyTreeNode
 from qdax.core.neuroevolution.buffers.buffer import Transition, QDTransition
 from qdax.types import Descriptor, ExtraScores, Fitness, Genotype, Params, RNGKey
 
-from src.models.base_utils import SurrogateModel, SurrogateModelState, SurrogateModelConfig
-from src.models.base_models import (
+from src.models.base_model import SurrogateModel, SurrogateModelState, SurrogateModelConfig
+from src.models.base_modules import (
     DynamicsModule, 
     make_dynamics_model_loss_fn,
     ProbDynamicsModule, 
@@ -457,29 +457,23 @@ class DynamicsModel(SurrogateModel):
             )
             
             # Reshape so we can train bootstrapped ensembel models
-            # print("Samples obs shape: ", samples.obs.shape)
             samples = jax.tree_util.tree_map(
                 lambda x: x.reshape((self._config.surrogate_ensemble_size, self._config.surrogate_batch_size, -1)),
                 samples
             )
-            # print("Reshaped samples obs shape: ", samples.obs.shape)
             
             # Compute the loss and update the model
             loss, gradient = jax.vmap(jax.value_and_grad(_loss_fn))(
                 model_params,
                 samples,
             )
-            # print("Loss shape: ", loss.shape)
-            # print("Gradient shape: ", jax.tree_util.tree_map(lambda x: x.shape, gradient))
             
             (model_updates, optimizer_state,) = self._optimizer.update(
                 gradient, optimizer_state
             )
-            # print("Model updates shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_updates))
-            # print("Optimizer state shape: ", jax.tree_util.tree_map(lambda x: x.shape, optimizer_state))
 
             model_params = jax.vmap(optax.apply_updates)(model_params, model_updates)
-            # print("Model params shape: ", jax.tree_util.tree_map(lambda x: x.shape, model_params))
+           
             # print(f"Training Loss {it}/{num_batches}: ", loss)
 
         training_steps = training_steps + num_batches
@@ -488,12 +482,12 @@ class DynamicsModel(SurrogateModel):
         test_samples, random_key = replay_buffer.sample_data(
             random_key, test_data, sample_size=self._config.surrogate_batch_size
         )
-        # print("Test samples obs shape: ", jax.tree_util.tree_map(lambda x: x.shape, test_samples))
+       
         test_samples = jax.tree_util.tree_map(
             lambda x: jnp.repeat(jnp.expand_dims(x, axis=0), self._config.surrogate_ensemble_size, axis=0),
             test_samples
         )
-        # print("Reshaped test samples obs shape: ", jax.tree_util.tree_map(lambda x: x.shape, test_samples))
+       
         test_loss, _ = jax.lax.stop_gradient(
             jax.vmap(
                 jax.value_and_grad(_loss_fn))(
@@ -514,9 +508,6 @@ class DynamicsModel(SurrogateModel):
             return best_test_loss, epochs_since_improvement
         
         # less than 1% improvement in test loss - early stopping
-        # print("best_test_loss: ", best_test_loss)
-        # print("test_loss: ", test_loss)
-        # print("Condition", (best_test_loss - test_loss) / best_test_loss)
         best_test_loss, epochs_since_improvement = jax.lax.cond(
             (best_test_loss - test_loss)/abs(best_test_loss) > 0.01,
             cond_true,
@@ -582,21 +573,17 @@ class DynamicsModel(SurrogateModel):
             )
             
             # Reshape so we can train bootstrapped ensembel models
-            # print("Samples obs shape: ", samples.obs.shape)
             samples = jax.tree_util.tree_map(
                 lambda x: x.reshape((self._config.surrogate_ensemble_size, self._config.surrogate_batch_size, -1)),
                 samples
             )
-            # print("Reshaped samples obs shape: ", samples.obs.shape)
             
             # Compute the loss and update the model
             loss, gradient = jax.vmap(jax.value_and_grad(_loss_fn))(
                 model_params,
                 samples,
             )
-            # print("Loss shape: ", loss.shape)
-            # print("Gradient shape: ", jax.tree_util.tree_map(lambda x: x.shape, gradient))
-            
+
             #@jax.jit
             def _update_params(params_input: Tuple) -> Tuple:
                 gradient, optimizer_state, model_params = params_input

@@ -11,14 +11,14 @@ from qdax.core.neuroevolution.networks.networks import MLP
 from qdax.types import Descriptor, ExtraScores, Fitness, Genotype, Params, RNGKey
 
 from src.models.utils import DataBuffer, Datapoint
-from src.models.base_models import (
+from models.base_modules import (
     DirectModule, 
     make_direct_model_loss_fn,
     ProbDirectModule, 
     make_prob_direct_model_loss_fn,
 )
 
-from src.models.base_utils import SurrogateModel, SurrogateModelState, SurrogateModelConfig
+from models.base_model import SurrogateModel, SurrogateModelState, SurrogateModelConfig
 
 @dataclass
 class DirectModelConfig(SurrogateModelConfig):

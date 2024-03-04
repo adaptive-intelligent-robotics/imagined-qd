@@ -57,7 +57,7 @@ class ModelBasedMAPElites:
         self._metrics_function = metrics_function
         self._config = surrogate_config
 
-    #@partial(jax.jit, static_argnames=("self",))
+    # @partial(jax.jit, static_argnames=("self",))
     def init(
         self,
         init_genotypes: Genotype,
@@ -128,14 +128,14 @@ class ModelBasedMAPElites:
         )   
         
         # train the surrogate model
-        print("Initial training the surrogate model")
+        print("Initial training of the surrogate model")
         new_surrogate_model_state = self._surrogate_model.train_model(
             surrogate_state=surrogate_model_state,
         )
 
         return repertoire, imagined_repertoire, emitter_state, new_surrogate_model_state, random_key
 
-    #@partial(jax.jit, static_argnames=("self",))
+    @partial(jax.jit, static_argnames=("self",))
     def update_imagination(
         self,
         repertoire: MapElitesRepertoire,
@@ -151,7 +151,7 @@ class ModelBasedMAPElites:
         3. The obtained offsprings are scored and then added to the imagined repertoire.
 
         Args:
-            repertoire: the MAP-Elites repertoire (could be real or imagined)
+            repertoire: the MAP-Elites repertoire (imagined)
             emitter_state: state of the emitter
             random_key: a jax PRNG random key
 
@@ -240,9 +240,6 @@ class ModelBasedMAPElites:
             it,
         ) = state
         
-        #print("Imagined iteration {}".format(it))
-        #print("Add buffer position: ", imagined_repertoire.add_buffer_position)
-        #print("Add buffer size: ", self._config.add_buffer_size)
         # print("cond 1: ", imagined_repertoire.add_buffer_position < self._config.add_buffer_size)
         # print("cond 2: ", it < self._config.num_imagined_iterations)
         return jnp.logical_and(
@@ -250,9 +247,7 @@ class ModelBasedMAPElites:
             it < self._config.num_imagined_iterations
         )
 
-
-
-    #@partial(jax.jit, static_argnames=("self",))
+    # @partial(jax.jit, static_argnames=("self",))
     def update(
         self,
         repertoire: MapElitesRepertoire,
@@ -263,9 +258,10 @@ class ModelBasedMAPElites:
     ) -> Tuple[MapElitesRepertoire, ImaginedRepertoire, Optional[EmitterState], SurrogateModelState, Metrics, RNGKey]:
         """
         Performs:
-        1. Selection from the imagined repertoire
-        2. Execution of the solution from the imagined repertoire
-        3. Addition of the solutions in the the real repertoire
+        1. QD in imagination
+        2. Selection from the imagined archive
+        2. Execution of the solution from the imagined archive
+        4. Addition of the solutions in the the archive
 
         Args:
             repertoire: the MAP-Elites repertoire
@@ -279,15 +275,7 @@ class ModelBasedMAPElites:
             a new jax PRNG key
         """
 
-        # perform n iterations of the MAP-Elites algorithm in imagination (until threhold or until n)
-        # while imagined_repertoire.add_buffer_position < self._config.threshold_add_buffer:
-        # for _ in range(self._config.num_imagined_iterations):
-        #     (imagined_repertoire, emitter_state, metrics, random_key,) = self.update_imagination(
-        #         imagined_repertoire, 
-        #         emitter_state, 
-        #         surrogate_model_state,
-        #         random_key
-        #     )
+        # perform MAP-Elites algorithm in imagination (until threshold or until n iterations)
         print("Imagination loop")
         (repertoire, imagined_repertoire, emitter_state, surrogate_model_state, random_key, im_it) = jax.lax.while_loop(
             self._update_cond_fun, 

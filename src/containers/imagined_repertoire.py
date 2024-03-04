@@ -112,16 +112,11 @@ class ImaginedRepertoire(MapElitesRepertoire):
         num_added_solutions = jnp.count_nonzero(addition_condition)
         # gets the indices of the batch of added solutions and to maintain fixed size of batch fills the rest with a large index
         add_indices = jnp.nonzero(addition_condition, size=addition_condition.shape[0], fill_value=num_centroids)[0]
-        #print("add indices shape: ", add_indices.shape)
+ 
         add_indices_sorted = jnp.sort(add_indices, axis=0)
 
         added_genotypes = jax.tree_map(lambda x: x.at[add_indices_sorted].get(), batch_of_genotypes)
-        # print("addition_condition: ", addition_condition.shape)
-        # print("batch_of_genotypes: ", jax.tree_map(lambda x: x.shape, batch_of_genotypes))
-        #print("added_genotypes: ", jax.tree_map(lambda x: x.shape, added_genotypes))
-        # print("add buffer: ", jax.tree_map(lambda x: x.shape, self.add_buffer))
-        # print("num_added_solutions: ", num_added_solutions)
-        # print("new add buffer position: ", self.add_buffer_position+num_added_solutions)
+
         new_add_buffer = jax.tree_map(
             lambda add_buffer, new_genotypes: jax.lax.dynamic_update_slice_in_dim(add_buffer, new_genotypes, start_index=self.add_buffer_position, axis=0),
             self.add_buffer,
